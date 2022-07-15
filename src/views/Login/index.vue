@@ -10,12 +10,12 @@
       <template #left><van-icon name="cross" /></template>
     </van-nav-bar>
     <!-- input框 -->
-    <van-form @submit="login" class="form">
+    <van-form @submit="login" class="form" ref="form">
       <van-field
         v-model="mobile"
         name="mobile"
         placeholder="请输入手机号"
-        :rules="[{ required: true, message: '请输入手机号' }]"
+        :rules="MobileRules"
       >
         <template #label>
           <span class="toutiao toutiao-shouji"></span>
@@ -26,13 +26,25 @@
         type="text"
         name="code"
         placeholder="请输入验证码"
-        :rules="[{ required: true, message: '请输入验证码' }]"
+        :rules="CheckNum"
       >
         <template #label>
           <span class="toutiao toutiao-yanzhengma"></span>
         </template>
         <template #right-icon>
-          <van-button size="mini" round class="iconbtn">发送验证码</van-button>
+          <van-count-down
+            :time="3 * 1000"
+            v-if="CodeisShow"
+            @finish="CodeisShow = false"
+          />
+          <van-button
+            size="mini"
+            round
+            class="iconbtn"
+            v-else
+            @click.prevent="sendCode"
+            >发送验证码</van-button
+          >
         </template>
       </van-field>
       <div style="margin: 16px">
@@ -45,12 +57,16 @@
 </template>
 
 <script>
-import { login } from '@/api/user'
+import { login, sendCode } from '@/api/user'
+import { MobileRules, CheckNum } from '@/views/Login/rules'
 export default {
   data () {
     return {
-      username: '',
-      code: ''
+      mobile: '',
+      code: '',
+      MobileRules,
+      CheckNum,
+      CodeisShow: false
     }
   },
 
@@ -62,7 +78,54 @@ export default {
       console.log('submit', values)
     },
     async login () {
-      await login(this.mobile, this.code)
+      this.$toast.loading({
+        message: '登陆中...',
+        forbidClick: true
+      })
+      try {
+        const res = await login(this.mobile, this.code)
+        this.$store.commit('setUser', res.data.data)
+        console.log(res)
+        this.$router.push('/profile')
+        this.$toast.success('登陆成功')
+      } catch (e) {
+        // this.$toast.fail('登陆失败')
+        // console.log(e)
+        const status = e.response.status
+        let message = '登录错误，请刷新'
+        if (status === 400) {
+          message = e.response.data.message
+        }
+        this.$toast.fail(message)
+        // switch (status) {
+        //   case 400:
+        //     this.$toast.fail(e.response.data.message)
+        //     break
+        //   case 507:
+        //     this.$toast.fail('服务器开小差了，请稍后重试~')
+        //     break
+        //   default:
+        //     this.$toast.fail('服务器开小差了，请稍后重试~')
+        //     break
+        // }
+      }
+    },
+    async sendCode () {
+      try {
+        await this.$refs.form.validate('mobile')
+        await sendCode(this.mobile)
+        this.CodeisShow = true
+      } catch (e) {
+        if (!e.response) {
+          this.$toast.fail('手机号格式不正确')
+        } else {
+          const status = e.response.status
+          if (status === 404 || status === 429) {
+            this.$toast.fail(e.response.data.message)
+          }
+        }
+        // this.$toast.fail('手机号非法')
+      }
     }
   }
 }
