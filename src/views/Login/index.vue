@@ -75,7 +75,7 @@ export default {
       this.$router.back()
     },
     onSubmit (values) {
-      console.log('submit', values)
+      // console.log('submit', values)
     },
     async login () {
       this.$toast.loading({
@@ -85,7 +85,7 @@ export default {
       try {
         const res = await login(this.mobile, this.code)
         this.$store.commit('setUser', res.data.data)
-        console.log(res)
+        // console.log(res)
         this.$router.push('/profile')
         this.$toast.success('登陆成功')
       } catch (e) {
