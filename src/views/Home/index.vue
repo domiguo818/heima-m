@@ -87,7 +87,7 @@ export default {
         try {
           await delMyChannel(id)
         } catch (error) {
-          this.$toast.fail('删除用户频道失败')
+          return this.$toast.fail('删除用户频道失败')
         }
       }
       this.$toast.fail('删除用户频道成功')
