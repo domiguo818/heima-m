@@ -9,6 +9,7 @@ import Vant from 'vant'
 import 'vant/lib/index.css'
 // 引入felaxible
 import 'amfe-flexible'
+// Vue.prototype.$EventBus = new Vue()
 
 Vue.use(Vant)
 
